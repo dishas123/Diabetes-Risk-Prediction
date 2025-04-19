@@ -69,19 +69,8 @@ This is a Streamlit-based web application that predicts the risk of diabetes usi
 
 ### 1. Clone the repository
 ```bash
-git clone https://github.com/your-username/your-repo.git
-cd your-repo
+git clone https://github.com/dishas123/Diabetes-Risk-Prediction.git
+cd Diabetes-Risk-Prediction
 
-2. Install dependencies
-bash
-Copy
-Edit
-pip install -r requirements.txt
-3. Add the dataset
-Place your diabetes.csv file in the root directory. You can find it here.
-
-4. Run the app
-bash
-Copy
-Edit
+Run the app:
 streamlit run app.py
