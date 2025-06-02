@@ -60,7 +60,9 @@ This is a Streamlit-based web application that predicts the risk of diabetes usi
 
 ## 📷 Screenshot
 
-<img width="563" alt="image" src="https://github.com/user-attachments/assets/b95c6111-14b8-4236-890c-66cb32dca1a8" />
+
+![image](https://github.com/user-attachments/assets/c8476f27-3b59-4a93-93a9-a57c76a0195f)
+
 
 
 ---
