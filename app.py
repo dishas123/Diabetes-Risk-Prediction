@@ -4,8 +4,10 @@ import numpy as np
 from sklearn.linear_model import LogisticRegression
 from sklearn.preprocessing import StandardScaler
 from sklearn.impute import SimpleImputer
+from sklearn.model_selection import train_test_split
+from sklearn.metrics import accuracy_score
 
-# Set page config first
+# Set page config
 st.set_page_config(
     page_title="Diabetes Risk Assessment",
     page_icon="🩺",
@@ -15,10 +17,9 @@ st.set_page_config(
 
 @st.cache_data
 def load_and_preprocess_data():
-    # Load dataset (replace with your actual data loading)
     df = pd.read_csv("diabetes.csv")
     
-    # Handle missing values (0s in medical measurements)
+    # Impute 0s in certain medical columns
     cols_to_impute = ['Glucose', 'BloodPressure', 'SkinThickness', 'Insulin', 'BMI']
     imputer = SimpleImputer(missing_values=0, strategy='mean')
     df[cols_to_impute] = imputer.fit_transform(df[cols_to_impute])
@@ -27,14 +28,24 @@ def load_and_preprocess_data():
 
 @st.cache_data
 def train_model(X, y):
-    scaler = StandardScaler()
-    X_scaled = scaler.fit_transform(X)
+    # Split into train and test sets
+    X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=42)
     
+    # Scale features
+    scaler = StandardScaler()
+    X_train_scaled = scaler.fit_transform(X_train)
+    X_test_scaled = scaler.transform(X_test)
+    
+    # Train logistic regression
     model = LogisticRegression(max_iter=1000)
-    model.fit(X_scaled, y)
-    return model, scaler
+    model.fit(X_train_scaled, y_train)
+    
+    # Predict on test data and calculate accuracy
+    y_pred = model.predict(X_test_scaled)
+    test_accuracy = accuracy_score(y_test, y_pred)
+    
+    return model, scaler, test_accuracy
 
-# Main application
 def main():
     st.title("Diabetes Risk Assessment Tool")
     st.markdown("""
@@ -42,13 +53,13 @@ def main():
     **Note:** This is not medical advice. Always consult a healthcare professional.
     """)
 
-    # Load data and train model
+    # Load and train
     df = load_and_preprocess_data()
     X = df.drop('Outcome', axis=1)
     y = df['Outcome']
-    model, scaler = train_model(X, y)
+    model, scaler, test_accuracy = train_model(X, y)
 
-    # User input section
+    # Sidebar input
     with st.sidebar:
         st.header("Health Parameters")
         pregnancies = st.slider("Pregnancies", 0, 17, 0)
@@ -60,30 +71,28 @@ def main():
         dpf = st.number_input("Diabetes Pedigree Function", 0.08, 2.5, 0.37)
         age = st.slider("Age", 20, 100, 30)
 
-    # Create input array
+        st.subheader("🔍 Model Info")
+        st.metric("Test Accuracy", f"{test_accuracy * 100:.2f}%")
+
     input_data = pd.DataFrame([[pregnancies, glucose, bp, skin_thickness, insulin, bmi, dpf, age]],
                               columns=X.columns)
 
     if st.button("Assess Diabetes Risk"):
         try:
-            # Preprocess and predict
             scaled_input = scaler.transform(input_data)
             probability = model.predict_proba(scaled_input)[0][1] * 100
             risk_level = "High Risk" if probability >= 50 else "Moderate Risk" if probability >= 30 else "Low Risk"
 
-            # Display results
             col1, col2 = st.columns(2)
-            
+
             with col1:
                 st.subheader("Risk Assessment")
                 st.metric("Diabetes Probability", f"{probability:.1f}%")
-                st.progress(probability/100)
-                
-                # Risk level indicator
+                st.progress(probability / 100)
+
                 color = "red" if risk_level == "High Risk" else "orange" if risk_level == "Moderate Risk" else "green"
                 st.markdown(f"<h3 style='color:{color}'>{risk_level}</h3>", unsafe_allow_html=True)
-                
-                # Recommendations
+
                 st.subheader("Recommendations")
                 if risk_level == "High Risk":
                     st.error("""
@@ -109,17 +118,13 @@ def main():
 
             with col2:
                 st.subheader("Key Contributing Factors")
-                
-                # Feature importance analysis
                 feature_importance = pd.DataFrame({
                     'Feature': X.columns,
-                    'Impact': np.exp(model.coef_[0])  # Odds ratio
+                    'Impact': np.exp(model.coef_[0])
                 }).sort_values('Impact', ascending=False)
-                
-                # Visualize feature impacts
+
                 st.bar_chart(feature_importance.set_index('Feature')['Impact'])
-                
-                # Detailed factor explanations
+
                 st.subheader("Factor Explanations")
                 st.write("""
                 - **Glucose**: Blood sugar levels (most significant predictor)
@@ -137,3 +142,13 @@ def main():
 
 if __name__ == "__main__":
     main()
+
+
+
+        
+            
+           
+                   
+                
+                
+
