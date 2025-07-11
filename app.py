@@ -5,7 +5,9 @@ from sklearn.linear_model import LogisticRegression
 from sklearn.preprocessing import StandardScaler
 from sklearn.impute import SimpleImputer
 from sklearn.model_selection import train_test_split
-from sklearn.metrics import accuracy_score
+from sklearn.metrics import accuracy_score, confusion_matrix, roc_curve, auc
+import matplotlib.pyplot as plt
+import seaborn as sns
 
 # Set page config
 st.set_page_config(
@@ -44,7 +46,12 @@ def train_model(X, y):
     y_pred = model.predict(X_test_scaled)
     test_accuracy = accuracy_score(y_test, y_pred)
     
-    return model, scaler, test_accuracy
+    # Additional metrics for evaluation
+    conf_matrix = confusion_matrix(y_test, y_pred)
+    fpr, tpr, thresholds = roc_curve(y_test, model.predict_proba(X_test_scaled)[:, 1])
+    roc_auc = auc(fpr, tpr)
+    
+    return model, scaler, test_accuracy, conf_matrix, fpr, tpr, roc_auc
 
 def main():
     st.title("Diabetes Risk Assessment Tool")
@@ -57,7 +64,7 @@ def main():
     df = load_and_preprocess_data()
     X = df.drop('Outcome', axis=1)
     y = df['Outcome']
-    model, scaler, test_accuracy = train_model(X, y)
+    model, scaler, test_accuracy, conf_matrix, fpr, tpr, roc_auc = train_model(X, y)
 
     # Sidebar input
     with st.sidebar:
@@ -137,17 +144,38 @@ def main():
                 - **Insulin**: Insulin resistance marker
                 """)
 
+            # Model Evaluation Section
+            st.markdown("---")
+            st.subheader("Model Evaluation & Explainability")
+
+            # Confusion Matrix Plot
+            st.write("### Confusion Matrix")
+            fig_cm, ax_cm = plt.subplots()
+            sns.heatmap(conf_matrix, annot=True, fmt="d", cmap="Blues", ax=ax_cm)
+            ax_cm.set_xlabel("Predicted Label")
+            ax_cm.set_ylabel("True Label")
+            ax_cm.set_title("Confusion Matrix")
+            st.pyplot(fig_cm)
+
+            # ROC Curve Plot
+            st.write("### ROC Curve")
+            fig_roc, ax_roc = plt.subplots()
+            ax_roc.plot(fpr, tpr, color='darkorange', lw=2, label=f'ROC curve (area = {roc_auc:.2f})')
+            ax_roc.plot([0, 1], [0, 1], color='navy', lw=2, linestyle='--')
+            ax_roc.set_xlim([0.0, 1.0])
+            ax_roc.set_ylim([0.0, 1.05])
+            ax_roc.set_xlabel('False Positive Rate')
+            ax_roc.set_ylabel('True Positive Rate')
+            ax_roc.set_title('Receiver Operating Characteristic (ROC) Curve')
+            ax_roc.legend(loc="lower right")
+            st.pyplot(fig_roc)
+
         except Exception as e:
             st.error(f"Error in prediction: {str(e)}")
 
 if __name__ == "__main__":
     main()
 
-
-
-        
-            
-           
                    
                 
                 
