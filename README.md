@@ -14,6 +14,7 @@ This is a Streamlit-based web application that predicts the risk of diabetes usi
 - 🩺 **Personalized Health Recommendations**
 - 📊 **Feature Importance Visualization** using odds ratio
 - 📚 **Educational Insight** into each contributing factor
+- 🤖 **Model Evaluation & Explainability** (The Confusion matrix and the ROC Curve is displayed in the website along with the % accuraccy of the logistic regression model) <br>
 
 ---
 
